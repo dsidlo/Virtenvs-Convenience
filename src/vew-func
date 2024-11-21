@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+
+# Source this wrapper function in your .bashrc
+# This function calls on the vew-script to get details about you Virtualenvs.
+
+ve () {
+    if [ ! -z "$VIRTUAL_ENV" ]; then
+	curr_env=`basename $VIRTUAL_ENV`
+	echo "ERROR: You are in a current Virtual Environment: [${curr_env}]"
+	echo "       Please run \"deactivate\" before using ve to switch to a new Virtual Environment."
+	return
+    fi
+    local program="vew-script"  # The program to run
+    # Run the program with the given arguments and capture its output
+    local output
+    output=$("$program" "$@")
+    # Check if the output starts with "source "
+    if [[ "$output" == source~* ]]; then
+	IFS='~' read -r -a parts <<< "$output"
+	echo "Output: [ ${output} ]   Parts: [ ${parts} ]"
+	# Assign parts to variables
+	local source_txt=${parts[0]}
+	local env_name=${parts[1]}
+	local act_script=${parts[2]}
+        echo "Activating Virtualenv: ${env_name}"
+        source $act_script
+    elif [[ "$output" == Error\:\* ]]; then
+	 echo "${output}"
+    elif [[ "$output" == Usage\:\* ]]; then
+	 echo "${output}"
+    else
+        # Print the output if it doesn't start with "source "
+        echo "Not executed: $output"
+    fi
+}

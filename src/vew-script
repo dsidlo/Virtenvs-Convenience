@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# This script is run by the ve function that is created when the vew-function file
+# is sourced into a bash shell. This script gets details about the Virtualenvs in
+# you environment.
+
+# Define the base directory for virtual environments
+VENV_DIR=~/.virtualenvs
+
+# Check if the directory exists
+if [[ ! -d "$VENV_DIR" ]]; then
+    echo "Error: Directory $VENV_DIR does not exist."
+    exit 1
+fi
+
+# Handle input parameters
+if [[ "$1" == "list" ]]; then
+    # List directories in ~/.virtualenvs
+    echo "Listing virtual environments in $VENV_DIR:"
+    # ls -1d "$VENV_DIR"/*
+    find ~/.virtualenvs/ -maxdepth 1  -type d \
+	 ! -name '.virtualenvs' ! -name 'bin' ! -name 'lib' -exec basename \{\} \;
+elif [[ "$1" == act* ]]; then
+    # Activate the specified virtual environment
+    if [[ -z "$2" ]]; then
+        echo "Error: No environment specified."
+        echo "Usage: $0 act <environment>"
+        exit 1
+    fi
+
+    # Find the closes match to $2...
+    env=''
+    envs=`find ~/.virtualenvs/ -maxdepth 1 -type d -name ${2}'*' -exec basename \{\} \;`
+    # echo "Debug: envs[${envs}]"
+    entry_count=$(echo "$env" | wc -l)
+    if (( entry_count > 1 )); then
+	env=${envs[0]}
+	# echo "Found more than one environment ${envs}"
+	# echo "Activating first found: ${env}"
+    else
+	env=${envs}
+	# echo "Activating: ${env}"
+    fi
+    
+    ENV_PATH="$VENV_DIR/${env}/bin/activate"
+       
+    if [[ -f "$ENV_PATH" ]]; then
+        # echo "Activating virtual environment: ${env}"
+	# source "$ENV_PATH"
+	cmd="source~${env}~${ENV_PATH}"
+	echo $cmd
+    else
+        echo "Error: Environment '$2' not found or activate script is missing."
+        exit 1
+    fi
+else
+    echo "Usage:"
+    echo "$0 list              - List all virtual environments in ~/.virtualenvs"
+    echo "$0 act <environment> - Activate the specified virtual environment"
+    exit 1
+fi
